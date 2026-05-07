@@ -7,6 +7,7 @@ import { ReposModule } from '@/repos/repos.module';
 import { CodeModule } from '@/code/code.module';
 import { SessionsModule } from '@/sessions/sessions.module';
 import { AgentModule } from '@/agent/agent.module';
+import { AuditModule } from '@/audit/audit.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AgentModule } from '@/agent/agent.module';
     CodeModule,
     SessionsModule,
     AgentModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [AppService],
