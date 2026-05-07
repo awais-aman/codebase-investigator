@@ -8,6 +8,7 @@ import { CodeModule } from '@/code/code.module';
 import { SessionsModule } from '@/sessions/sessions.module';
 import { AgentModule } from '@/agent/agent.module';
 import { AuditModule } from '@/audit/audit.module';
+import { ChatModule } from '@/chat/chat.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AuditModule } from '@/audit/audit.module';
     SessionsModule,
     AgentModule,
     AuditModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
