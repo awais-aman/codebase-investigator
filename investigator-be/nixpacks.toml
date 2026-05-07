@@ -1,0 +1,6 @@
+# Nixpacks build config for Railway.
+# Adds git (required by simple-git) and ripgrep (faster than the Node grep
+# fallback) to the runtime image.
+
+[phases.setup]
+nixPkgs = ["...", "git", "ripgrep"]
