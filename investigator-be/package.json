@@ -38,8 +38,8 @@
     "dotenv": "^17.4.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "simple-git": "^3.36.0",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "tar": "^7.5.14"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -52,6 +52,7 @@
     "@types/node": "^24.0.0",
     "@types/supertest": "^7.0.0",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/tar": "^6.1.13",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",

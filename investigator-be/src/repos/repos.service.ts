@@ -1,8 +1,12 @@
 import { existsSync } from 'node:fs';
 import { mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
+import { ReadableStream as NodeReadableStream } from 'node:stream/web';
+import { createGunzip } from 'node:zlib';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { simpleGit } from 'simple-git';
+import * as tar from 'tar';
 import { REPO_CLONE_ROOT } from '@/shared/constants';
 import { ParsedGithubUrl } from '@/repos/dto/parsed-github-url.dto';
 
@@ -13,7 +17,7 @@ export class ReposService {
   parseGithubUrl(input: string): ParsedGithubUrl {
     const trimmed = input.trim();
     // Accept https://github.com/owner/repo, https://github.com/owner/repo.git,
-    // and trailing slashes / branches (we discard branch path here).
+    // and trailing slashes.
     const match = trimmed.match(
       /^https?:\/\/github\.com\/([^/\s]+)\/([^/\s.]+)(\.git)?\/?$/i,
     );
@@ -35,25 +39,59 @@ export class ReposService {
     return join(REPO_CLONE_ROOT, sessionId);
   }
 
+  /**
+   * Downloads the repo's default-branch tarball from GitHub, gunzips, and
+   * extracts to the per-session directory. Strips the top-level wrapper dir
+   * (GitHub adds `repo-HEAD/` to every entry).
+   *
+   * Why tarball instead of `git clone`: avoids depending on a system `git`
+   * binary in the runtime container. Pure Node, works on Railway / Vercel /
+   * Lambda / anywhere.
+   */
   async clone(sessionId: string, parsed: ParsedGithubUrl): Promise<string> {
     const target = this.pathFor(sessionId);
 
     if (existsSync(target)) {
-      this.logger.log(`Repo for session ${sessionId} already cloned`);
+      this.logger.log(`Repo for session ${sessionId} already cached`);
       return target;
     }
 
-    await mkdir(REPO_CLONE_ROOT, { recursive: true });
+    await mkdir(target, { recursive: true });
 
-    this.logger.log(`Cloning ${parsed.webUrl} -> ${target}`);
+    const tarballUrl = `https://codeload.github.com/${parsed.owner}/${parsed.name}/tar.gz/HEAD`;
+    this.logger.log(`Fetching ${tarballUrl}`);
+
+    let response: Response;
     try {
-      await simpleGit().clone(parsed.cloneUrl, target, ['--depth', '1']);
+      response = await fetch(tarballUrl, {
+        headers: { 'User-Agent': 'codebase-investigator' },
+      });
     } catch (err) {
-      // If clone half-finished, clean up so retries are clean.
       await this.remove(sessionId).catch(() => undefined);
       const message = err instanceof Error ? err.message : 'unknown error';
       throw new BadRequestException(
-        `Failed to clone ${parsed.webUrl}: ${message}. Make sure the repo exists and is public.`,
+        `Failed to reach GitHub: ${message}. Check your internet connection.`,
+      );
+    }
+
+    if (!response.ok || !response.body) {
+      await this.remove(sessionId).catch(() => undefined);
+      throw new BadRequestException(
+        `Failed to fetch ${parsed.webUrl}: ${response.status} ${response.statusText}. Make sure the repo exists and is public.`,
+      );
+    }
+
+    try {
+      await pipeline(
+        Readable.fromWeb(response.body as NodeReadableStream<Uint8Array>),
+        createGunzip(),
+        tar.extract({ cwd: target, strip: 1 }),
+      );
+    } catch (err) {
+      await this.remove(sessionId).catch(() => undefined);
+      const message = err instanceof Error ? err.message : 'unknown error';
+      throw new BadRequestException(
+        `Failed to extract ${parsed.webUrl}: ${message}`,
       );
     }
 
