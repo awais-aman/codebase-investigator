@@ -6,6 +6,7 @@ import { DatabaseModule } from '@/database/database.module';
 import { ReposModule } from '@/repos/repos.module';
 import { CodeModule } from '@/code/code.module';
 import { SessionsModule } from '@/sessions/sessions.module';
+import { AgentModule } from '@/agent/agent.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { SessionsModule } from '@/sessions/sessions.module';
     ReposModule,
     CodeModule,
     SessionsModule,
+    AgentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
