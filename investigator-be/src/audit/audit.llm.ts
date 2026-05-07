@@ -1,7 +1,9 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { AnthropicBedrock } from '@anthropic-ai/bedrock-sdk';
+import type Anthropic from '@anthropic-ai/sdk';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { AuditStatus } from '@prisma/client';
-import { ANTHROPIC_AUDITOR_MODEL, Provides } from '@/shared/constants';
+import { DEFAULT_BEDROCK_MODEL_ID, Provides } from '@/shared/constants';
 import {
   AUDITOR_SYSTEM_PROMPT,
   buildAuditorUserPrompt,
@@ -18,7 +20,8 @@ export class AuditLlm {
   private readonly logger = new Logger(AuditLlm.name);
 
   constructor(
-    @Inject(Provides.Anthropic) private readonly anthropic: Anthropic,
+    @Inject(Provides.Anthropic) private readonly anthropic: AnthropicBedrock,
+    private readonly config: ConfigService,
   ) {}
 
   async audit(input: {
@@ -42,10 +45,15 @@ export class AuditLlm {
       programmatic: input.programmatic,
     });
 
+    const model =
+      this.config.get<string>('AWS_BEDROCK_AUDITOR_MODEL_ID') ??
+      this.config.get<string>('AWS_BEDROCK_MODEL_ID') ??
+      DEFAULT_BEDROCK_MODEL_ID;
+
     let raw = '';
     try {
       const response = await this.anthropic.messages.create({
-        model: ANTHROPIC_AUDITOR_MODEL,
+        model,
         max_tokens: 600,
         system: AUDITOR_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }],

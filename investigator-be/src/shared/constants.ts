@@ -7,8 +7,13 @@ export enum RoutePaths {
   Messages = 'messages',
 }
 
-export const ANTHROPIC_INVESTIGATOR_MODEL = 'claude-sonnet-4-6';
-export const ANTHROPIC_AUDITOR_MODEL = 'claude-haiku-4-5-20251001';
+/**
+ * Default Bedrock model ID, used when AWS_BEDROCK_INVESTIGATOR_MODEL_ID
+ * (or the auditor variant) is not set. Anthropic Claude Sonnet 4.5 inference
+ * profile name shape; override per-environment via env vars.
+ */
+export const DEFAULT_BEDROCK_MODEL_ID =
+  'global.anthropic.claude-sonnet-4-5-20250929-v1:0';
 
 export const REPO_CLONE_ROOT = '/tmp/codebase-investigator/repos';
 

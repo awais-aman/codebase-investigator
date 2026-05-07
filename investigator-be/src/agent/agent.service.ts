@@ -1,8 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { AnthropicBedrock } from '@anthropic-ai/bedrock-sdk';
+import type Anthropic from '@anthropic-ai/sdk';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CodeService } from '@/code/code.service';
 import {
-  ANTHROPIC_INVESTIGATOR_MODEL,
+  DEFAULT_BEDROCK_MODEL_ID,
   MAX_TURNS_PER_INVESTIGATION,
   Provides,
 } from '@/shared/constants';
@@ -28,8 +30,9 @@ export class AgentService {
   private readonly logger = new Logger(AgentService.name);
 
   constructor(
-    @Inject(Provides.Anthropic) private readonly anthropic: Anthropic,
+    @Inject(Provides.Anthropic) private readonly anthropic: AnthropicBedrock,
     private readonly codeService: CodeService,
+    private readonly config: ConfigService,
   ) {}
 
   async investigate(input: InvestigateInput): Promise<AgentResult> {
@@ -38,10 +41,14 @@ export class AgentService {
       { role: 'user', content: input.userMessage },
     ];
     const toolCalls: ToolCallRecord[] = [];
+    const model =
+      this.config.get<string>('AWS_BEDROCK_INVESTIGATOR_MODEL_ID') ??
+      this.config.get<string>('AWS_BEDROCK_MODEL_ID') ??
+      DEFAULT_BEDROCK_MODEL_ID;
 
     for (let turn = 0; turn < MAX_TURNS_PER_INVESTIGATION; turn++) {
       const response = await this.anthropic.messages.create({
-        model: ANTHROPIC_INVESTIGATOR_MODEL,
+        model,
         max_tokens: 4096,
         system: buildInvestigatorSystemPrompt(input.repoLabel),
         tools: AGENT_TOOLS,

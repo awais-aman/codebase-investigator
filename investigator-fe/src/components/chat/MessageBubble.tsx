@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import type { Message } from "@/types/chat";
 import { AuditBadge } from "@/components/chat/AuditBadge";
 import { CitationLink } from "@/components/chat/CitationLink";
+import { Markdown } from "@/components/chat/Markdown";
 import { ToolCallTrace } from "@/components/chat/ToolCallTrace";
 
 type Props = {
@@ -26,7 +27,11 @@ export function MessageBubble({ message, githubUrl }: Props) {
             : "bg-zinc-100 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100 border border-zinc-200 dark:border-zinc-800",
         )}
       >
-        <div className="whitespace-pre-wrap">{message.content}</div>
+        {isUser ? (
+          <div className="whitespace-pre-wrap">{message.content}</div>
+        ) : (
+          <Markdown>{message.content}</Markdown>
+        )}
 
         {!isUser && message.auditVerdict && (
           <div className="mt-3">
