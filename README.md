@@ -1,5 +1,8 @@
 # Codebase Investigator
 
+> **Live demo:** <https://codebase-investigator-eight.vercel.app>
+> **API + Swagger:** <https://codebase-investigator-production.up.railway.app/api/docs>
+
 Paste a public GitHub URL, ask questions about the code in plain English, and
 get answers grounded in specific files and line ranges. **Every non-trivial
 answer ships with an independent audit verdict.**
